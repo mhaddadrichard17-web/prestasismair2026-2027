@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Prestasi Siswa</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-dark: #3730a3;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --bg-soft: #1e293b;
+            --card: rgba(30, 41, 59, 0.85);
+            --card-solid: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(148, 163, 184, 0.15);
+            --glow: 0 0 40px rgba(79, 70, 229, 0.25);
+            --radius: 16px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 0%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #6366f1 100%);
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(79, 70, 229, 0.4);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header h1 .trophy {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+        }
+
+        .db-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(8px);
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-left: 0.5rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.4rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.35rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            padding: 0.55rem 1.2rem;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.75);
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-tab:hover { color: white; background: rgba(255,255,255,0.1); }
+        .nav-tab.active {
+            background: white;
+            color: var(--primary-dark);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.75rem;
+        }
+
+        .section { display: none; }
+        .section.active {
+            display: block;
+            animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* STAT CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            padding: 1.4rem 1.5rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--glow);
+        }
+
+        .stat-card .icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .stat-card.green .value {
+            background: linear-gradient(135deg, #6ee7b7, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        .stat-card.orange .value {
+            background: linear-gradient(135deg, #fcd34d, #fbbf24);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        .stat-card.pink .value {
+            background: linear-gradient(135deg, #f9a8d4, #f472b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* FORM */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.15rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.45rem; }
+        .form-group.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        input, select, textarea {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        input::placeholder { color: #64748b; }
+
+        select option { background: #1e293b; color: var(--text); }
+
+        .file-upload {
+            border: 2px dashed rgba(148, 163, 184, 0.25);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .file-upload:hover, .file-upload.dragover {
+            border-color: var(--primary-light);
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .file-upload input { display: none; }
+        .file-name { margin-top: 0.6rem; font-size: 0.85rem; color: var(--success); font-weight: 600; }
+
+        /* BUTTONS */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(79, 70, 229, 0.5);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border-color: rgba(148,163,184,0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.78rem;
+        }
+        .btn-danger:hover { opacity: 0.9; transform: scale(1.05); }
+
+        .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        /* TABLE */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+
+        th {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 0.9rem 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:hover td { background: rgba(79, 70, 229, 0.08); }
+
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .badge-1 { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+        .badge-2 { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #3730a3; }
+        .badge-3 { background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #9d174d; }
+        .badge-other { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+
+        .cert-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+        .cert-link:hover { color: #22d3ee; }
+
+        /* FILTERS */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            align-items: center;
+        }
+
+        .filters input, .filters select {
+            max-width: 200px;
+            padding: 0.55rem 0.85rem;
+            font-size: 0.875rem;
+        }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            padding: 1.4rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: transform 0.25s;
+        }
+
+        .chart-card:hover { transform: translateY(-3px); }
+
+        .chart-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .chart-container { position: relative; height: 260px; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3.5rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .emoji { font-size: 3.5rem; margin-bottom: 0.75rem; opacity: 0.6; }
+
+        .loading {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--text-muted);
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 1.75rem;
+            right: 1.75rem;
+            background: #1e293b;
+            color: white;
+            padding: 0.9rem 1.4rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            z-index: 300;
+            transform: translateY(120px);
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--card-solid);
+            border-radius: var(--radius);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.75rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h3 { font-size: 1.15rem; font-weight: 700; }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .close-btn:hover { color: white; }
+
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; align-items: flex-start; }
+            .nav-tabs { width: 100%; overflow-x: auto; }
+            .form-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .container { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>
+                <span class="trophy">🏆</span> Sistem Prestasi Siswa
+                <span class="db-badge" id="dbStatus">🔌 Connecting...</span>
+            </h1>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-section="dashboard">Dashboard</button>
+                <button class="nav-tab" data-section="data">Data Prestasi</button>
+                <button class="nav-tab" data-section="tambah">Tambah Prestasi</button>
+                <button class="nav-tab" data-section="grafik">Grafik</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon">📊</div>
+                    <div class="label">Total Prestasi</div>
+                    <div class="value" id="stat-total">0</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="icon">🥇</div>
+                    <div class="label">Juara 1</div>
+                    <div class="value" id="stat-juara1">0</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="icon">🏷️</div>
+                    <div class="label">Kategori Unik</div>
+                    <div class="value" id="stat-kategori">0</div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="icon">👨‍🎓</div>
+                    <div class="label">Siswa Berprestasi</div>
+                    <div class="value" id="stat-siswa">0</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📊 Prestasi per Kategori</h3>
+                    <div class="chart-container"><canvas id="chartKategoriDash"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>🥇 Distribusi Juara</h3>
+                    <div class="chart-container"><canvas id="chartJuaraDash"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DATA PRESTASI -->
+        <section id="data" class="section">
+            <div class="card">
+                <div class="card-title">📋 Daftar Prestasi</div>
+                <div class="filters">
+                    <input type="text" id="searchInput" placeholder="🔍 Cari nama / kelas / kategori...">
+                    <select id="filterKelas"><option value="">Semua Kelas</option></select>
+                    <select id="filterKategori"><option value="">Semua Kategori</option></select>
+                    <select id="filterTingkat">
+                        <option value="">Semua Tingkat</option>
+                        <option value="Internasional">Internasional</option>
+                        <option value="Nasional">Nasional</option>
+                        <option value="Provinsi">Provinsi</option>
+                        <option value="Kabupaten">Kabupaten</option>
+                    </select>
+                    <select id="filterJuara">
+                        <option value="">Semua Juara</option>
+                        <option value="1">Juara 1</option>
+                        <option value="2">Juara 2</option>
+                        <option value="3">Juara 3</option>
+                        <option value="Harapan">Harapan</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+                    <button class="btn btn-outline btn-sm" onclick="clearAllData()">🗑️ Hapus Semua</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>Kelas</th>
+                                <th>Kategori Lomba</th>
+                                <th>Tingkat</th>
+                                <th>Juara</th>
+                                <th>Total</th>
+                                <th>Tanggal</th>
+                                <th>Pembimbing</th>
+                                <th>Sertifikat</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <div class="emoji">📭</div>
+                    <p>Belum ada data prestasi. Silakan tambah data baru.</p>
+                </div>
+                <div id="loadingTable" class="loading" style="display:none;">Memuat data...</div>
+            </div>
+        </section>
+
+        <!-- TAMBAH PRESTASI -->
+        <section id="tambah" class="section">
+            <div class="card">
+                <div class="card-title">➕ Tambah Prestasi Baru</div>
+                <form id="formPrestasi">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nama">Nama Siswa *</label>
+                            <input type="text" id="nama" required placeholder="Contoh: Ahmad Rizki">
+                        </div>
+                        <div class="form-group">
+                            <label for="kelas">Kelas *</label>
+                            <select id="kelas" required>
+                                <option value="">Pilih Kelas</option>
+                                <option value="X IPA 1">X IPA 1</option>
+                                <option value="X IPA 2">X IPA 2</option>
+                                <option value="X IPA 3">X IPA 3</option>
+                                <option value="X IPS 1">X IPS 1</option>
+                                <option value="X IPS 2">X IPS 2</option>
+                                <option value="XI IPA 1">XI IPA 1</option>
+                                <option value="XI IPA 2">XI IPA 2</option>
+                                <option value="XI IPA 3">XI IPA 3</option>
+                                <option value="XI IPS 1">XI IPS 1</option>
+                                <option value="XI IPS 2">XI IPS 2</option>
+                                <option value="XII IPA 1">XII IPA 1</option>
+                                <option value="XII IPA 2">XII IPA 2</option>
+                                <option value="XII IPA 3">XII IPA 3</option>
+                                <option value="XII IPS 1">XII IPS 1</option>
+                                <option value="XII IPS 2">XII IPS 2</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="kategori">Kategori Lomba *</label>
+                            <input type="text" id="kategori" required list="kategoriList" placeholder="Ketik atau pilih kategori...">
+                            <datalist id="kategoriList">
+                                <option value="Olimpiade Matematika">
+                                <option value="Olimpiade Fisika">
+                                <option value="Olimpiade Kimia">
+                                <option value="Olimpiade Biologi">
+                                <option value="Olimpiade Astronomi">
+                                <option value="Olimpiade Informatika / Komputer">
+                                <option value="Olimpiade Geografi">
+                                <option value="Olimpiade Kebumian">
+                                <option value="Olimpiade Ekonomi">
+                                <option value="Olimpiade Linguistik">
+                                <option value="Olimpiade Bahasa Inggris">
+                                <option value="KSN / OSN Matematika">
+                                <option value="KSN / OSN Fisika">
+                                <option value="KSN / OSN Kimia">
+                                <option value="KSN / OSN Biologi">
+                                <option value="KSN / OSN Informatika">
+                                <option value="KSN / OSN Astronomi">
+                                <option value="KSN / OSN Ekonomi">
+                                <option value="KSN / OSN Geografi">
+                                <option value="KSN / OSN Kebumian">
+                                <option value="Lomba Debat Bahasa Indonesia">
+                                <option value="Lomba Debat Bahasa Inggris">
+                                <option value="Lomba Pidato Bahasa Indonesia">
+                                <option value="Lomba Pidato Bahasa Inggris">
+                                <option value="Lomba Karya Tulis Ilmiah">
+                                <option value="Lomba Esai">
+                                <option value="Lomba Cerpen">
+                                <option value="Lomba Puisi">
+                                <option value="Lomba Cerdas Cermat">
+                                <option value="Lomba Quiz / Kuis">
+                                <option value="Lomba Robotik">
+                                <option value="Lomba Programming / Coding">
+                                <option value="Lomba Web Design">
+                                <option value="Lomba Mobile App">
+                                <option value="Lomba Desain Grafis">
+                                <option value="Lomba UI/UX Design">
+                                <option value="Lomba Fotografi">
+                                <option value="Lomba Videografi">
+                                <option value="Lomba Film Pendek">
+                                <option value="Lomba Animasi">
+                                <option value="Lomba Seni Lukis">
+                                <option value="Lomba Seni Musik">
+                                <option value="Lomba Seni Tari">
+                                <option value="Lomba Teater / Drama">
+                                <option value="Lomba Paduan Suara">
+                                <option value="Lomba Band">
+                                <option value="Lomba Solo Vocal">
+                                <option value="Lomba Futsal">
+                                <option value="Lomba Basket">
+                                <option value="Lomba Voli">
+                                <option value="Lomba Badminton">
+                                <option value="Lomba Atletik">
+                                <option value="Lomba Renang">
+                                <option value="Lomba Pencak Silat">
+                                <option value="Lomba Karate">
+                                <option value="Lomba Taekwondo">
+                                <option value="Taekwondo">
+                                <option value="Tapak Suci">
+                                <option value="Lomba Tapak Suci">
+                                <option value="Lomba Catur">
+                                <option value="Lomba Panahan">
+                                <option value="Lomba Sepak Bola">
+                                <option value="Lomba Tenis Meja">
+                                <option value="Lomba Pramuka">
+                                <option value="Lomba Paskibra">
+                                <option value="Lomba PMR">
+                                <option value="Lomba KIR / Karya Ilmiah Remaja">
+                                <option value="Lomba Poster">
+                                <option value="Lomba Infografis">
+                                <option value="Lomba Business Plan">
+                                <option value="Lomba Story Telling">
+                                <option value="Lomba Spelling Bee">
+                                <option value="Lomba Newscasting">
+                                <option value="Lomba Tahfidz Al-Quran">
+                                <option value="Lomba MTQ">
+                                <option value="Lomba Adzan">
+                                <option value="Lomba Da'wah / Kultum">
+                                <option value="Lomba Kaligrafi">
+                                <option value="Lomba Mading">
+                                <option value="Lomba Fashion Show">
+                                <option value="Lomba Tata Boga / Memasak">
+                                <option value="Lomba Tata Busana">
+                                <option value="Lomba Cosplay">
+                                <option value="Lomba E-Sport / Game">
+                                <option value="Lomba Public Speaking">
+                                <option value="Lomba MC / Presenter">
+                                <option value="Lomba Jurnalistik">
+                                <option value="Lomba Podcast">
+                                <option value="Lomba Startup / Inovasi">
+                                <option value="Lomba Lingkungan / Go Green">
+                                <option value="Lainnya">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="tingkat">Tingkat Lomba *</label>
+                            <select id="tingkat" required>
+                                <option value="">Pilih Tingkat</option>
+                                <option value="Internasional">🌍 Internasional</option>
+                                <option value="Nasional">🇮🇩 Nasional</option>
+                                <option value="Provinsi">🏛️ Provinsi</option>
+                                <option value="Kabupaten">📍 Kabupaten</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="juara">Juara *</label>
+                            <select id="juara" required>
+                                <option value="">Pilih Juara</option>
+                                <option value="1">🥇 Juara 1</option>
+                                <option value="2">🥈 Juara 2</option>
+                                <option value="3">🥉 Juara 3</option>
+                                <option value="Harapan">🏅 Juara Harapan</option>
+                                <option value="Finalis">⭐ Finalis</option>
+                                <option value="Peserta Terbaik">✨ Peserta Terbaik</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="total">Total / Poin</label>
+                            <input type="number" id="total" min="0" step="0.01" placeholder="Contoh: 95">
+                        </div>
+                        <div class="form-group">
+                            <label for="tanggal">Tanggal Lomba *</label>
+                            <input type="date" id="tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pembimbing">Pembimbing *</label>
+                            <input type="text" id="pembimbing" required placeholder="Nama Guru Pembimbing">
+                        </div>
+                        <div class="form-group full">
+                            <label>Upload Sertifikat</label>
+                            <div class="file-upload" id="fileUploadArea">
+                                <input type="file" id="sertifikat" accept="image/*,.pdf">
+                                <div style="font-size:1.5rem;margin-bottom:0.4rem;">📎</div>
+                                <div>Klik atau seret file sertifikat di sini</div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;">JPG, PNG, PDF — max 2MB</div>
+                                <div class="file-name" id="fileName"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:1.75rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">💾 Simpan Prestasi</button>
+                        <button type="reset" class="btn btn-outline" onclick="resetForm()">🔄 Reset</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- GRAFIK -->
+        <section id="grafik" class="section">
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📊 Prestasi berdasarkan Kategori Lomba</h3>
+                    <div class="chart-container"><canvas id="chartKategori"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>🥇 Distribusi Juara</h3>
+                    <div class="chart-container"><canvas id="chartJuara"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>🏫 Prestasi per Kelas</h3>
+                    <div class="chart-container"><canvas id="chartKelas"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>📅 Prestasi per Bulan</h3>
+                    <div class="chart-container"><canvas id="chartBulan"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>👨‍🏫 Prestasi per Pembimbing</h3>
+                    <div class="chart-container"><canvas id="chartPembimbing"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>⭐ Total Poin / Skor</h3>
+                    <div class="chart-container"><canvas id="chartTotal"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3>🌐 Prestasi per Tingkat Lomba</h3>
+                    <div class="chart-container"><canvas id="chartTingkat"></canvas></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Preview Sertifikat</h3>
+                <button class="close-btn" onclick="closePreview()">&times;</button>
+            </div>
+            <div id="previewContent"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '/api';
+        let USE_API = false;
+        let charts = {};
+        let currentFile = null;
+        let allData = [];
+        let fileDataBase64 = null;
+
+        // Chart.js dark theme defaults
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(148,163,184,0.12)';
+
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.section).classList.add('active');
+                if (tab.dataset.section === 'grafik' || tab.dataset.section === 'dashboard') loadStatsAndCharts();
+                if (tab.dataset.section === 'data') loadTable();
+            });
+        });
+
+        const fileArea = document.getElementById('fileUploadArea');
+        const fileInput = document.getElementById('sertifikat');
+        const fileNameEl = document.getElementById('fileName');
+
+        fileArea.addEventListener('click', () => fileInput.click());
+        fileArea.addEventListener('dragover', e => { e.preventDefault(); fileArea.classList.add('dragover'); });
+        fileArea.addEventListener('dragleave', () => fileArea.classList.remove('dragover'));
+        fileArea.addEventListener('drop', e => {
+            e.preventDefault();
+            fileArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) handleFile(fileInput.files[0]);
+        });
+
+        function handleFile(file) {
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('File terlalu besar (max 2MB)', 'error');
+                return;
+            }
+            currentFile = file;
+            fileNameEl.textContent = '✅ ' + file.name;
+            const reader = new FileReader();
+            reader.onload = e => {
+                fileDataBase64 = { name: file.name, type: file.type, data: e.target.result };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function lsLoad() {
+            try { return JSON.parse(localStorage.getItem('prestasiData') || '[]'); }
+            catch { return []; }
+        }
+        function lsSave(data) {
+            localStorage.setItem('prestasiData', JSON.stringify(data));
+        }
+
+        document.getElementById('formPrestasi').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.textContent = 'Menyimpan...';
+
+            const payload = {
+                nama: document.getElementById('nama').value.trim(),
+                kelas: document.getElementById('kelas').value,
+                kategori: document.getElementById('kategori').value.trim(),
+                tingkat: document.getElementById('tingkat').value,
+                juara: document.getElementById('juara').value,
+                total: document.getElementById('total').value ? parseFloat(document.getElementById('total').value) : null,
+                tanggal: document.getElementById('tanggal').value,
+                pembimbing: document.getElementById('pembimbing').value.trim()
+            };
+
+            try {
+                if (USE_API) {
+                    const formData = new FormData();
+                    Object.entries(payload).forEach(([k, v]) => formData.append(k, v ?? ''));
+                    if (currentFile) formData.append('sertifikat', currentFile);
+                    const res = await fetch(`${API}/prestasi`, { method: 'POST', body: formData });
+                    const json = await res.json();
+                    if (!json.success) throw new Error(json.message || 'Gagal menyimpan');
+                } else {
+                    const data = lsLoad();
+                    data.push({
+                        id: Date.now(),
+                        ...payload,
+                        sertifikat: fileDataBase64,
+                        created_at: new Date().toISOString()
+                    });
+                    lsSave(data);
+                }
+                showToast('Prestasi berhasil disimpan!', 'success');
+                resetForm();
+                document.querySelector('[data-section="data"]').click();
+                loadStatsAndCharts();
+            } catch (err) {
+                let msg = err.message || 'Gagal menyimpan data';
+                if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed')) {
+                    USE_API = false;
+                    updateDbBadge();
+                    const data = lsLoad();
+                    data.push({
+                        id: Date.now(),
+                        ...payload,
+                        sertifikat: fileDataBase64,
+                        created_at: new Date().toISOString()
+                    });
+                    lsSave(data);
+                    showToast('Prestasi berhasil disimpan di browser!', 'success');
+                    resetForm();
+                    document.querySelector('[data-section="data"]').click();
+                    loadStatsAndCharts();
+                    btn.disabled = false;
+                    btn.textContent = '💾 Simpan Prestasi';
+                    return;
+                }
+                showToast(msg, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Simpan Prestasi';
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('formPrestasi').reset();
+            currentFile = null;
+            fileDataBase64 = null;
+            fileNameEl.textContent = '';
+            fileInput.value = '';
+        }
+
+        async function loadTable() {
+            const tbody = document.getElementById('tableBody');
+            const empty = document.getElementById('emptyState');
+            const loading = document.getElementById('loadingTable');
+            loading.style.display = 'block';
+            tbody.innerHTML = '';
+            empty.style.display = 'none';
+
+            const search = (document.getElementById('searchInput').value || '').toLowerCase();
+            const fKelas = document.getElementById('filterKelas').value;
+            const fKategori = document.getElementById('filterKategori').value;
+            const fJuara = document.getElementById('filterJuara').value;
+            const fTingkat = document.getElementById('filterTingkat').value;
+
+            try {
+                if (USE_API) {
+                    const params = new URLSearchParams();
+                    if (search) params.set('search', search);
+                    if (fKelas) params.set('kelas', fKelas);
+                    if (fKategori) params.set('kategori', fKategori);
+                    if (fJuara) params.set('juara', fJuara);
+                    if (fTingkat) params.set('tingkat', fTingkat);
+                    const res = await fetch(`${API}/prestasi?${params}`);
+                    const json = await res.json();
+                    if (!json.success) throw new Error(json.message);
+                    allData = json.data;
+                } else {
+                    allData = lsLoad().filter(p => {
+                        const matchSearch = !search ||
+                            (p.nama || '').toLowerCase().includes(search) ||
+                            (p.kelas || '').toLowerCase().includes(search) ||
+                            (p.kategori || '').toLowerCase().includes(search) ||
+                            (p.pembimbing || '').toLowerCase().includes(search);
+                        return matchSearch &&
+                            (!fKelas || p.kelas === fKelas) &&
+                            (!fKategori || p.kategori === fKategori) &&
+                            (!fJuara || p.juara === fJuara) &&
+                            (!fTingkat || (p.tingkat || 'Kabupaten') === fTingkat);
+                    }).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+                }
+
+                loading.style.display = 'none';
+                if (allData.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                tbody.innerHTML = allData.map((p, i) => {
+                    const juaraBadge = getJuaraBadge(p.juara);
+                    let certBtn = '<span style="color:#64748b">-</span>';
+                    if (USE_API && p.sertifikat_filename) {
+                        certBtn = `<a href="/uploads/${p.sertifikat_filename}" target="_blank" class="cert-link">📄 Lihat</a>`;
+                    } else if (!USE_API && p.sertifikat && p.sertifikat.data) {
+                        certBtn = `<a href="${p.sertifikat.data}" target="_blank" class="cert-link">📄 Lihat</a>`;
+                    }
+                    return `<tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${escapeHtml(p.nama)}</strong></td>
+                        <td>${escapeHtml(p.kelas)}</td>
+                        <td>${escapeHtml(p.kategori)}</td>
+                        <td>${getTingkatBadge(p.tingkat)}</td>
+                        <td>${juaraBadge}</td>
+                        <td>${p.total != null ? p.total : '-'}</td>
+                        <td>${formatDate(p.tanggal)}</td>
+                        <td>${escapeHtml(p.pembimbing)}</td>
+                        <td>${certBtn}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteItem(${p.id})">Hapus</button></td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                loading.style.display = 'none';
+                USE_API = false;
+                updateDbBadge();
+                loadTable();
+            }
+        }
+
+        function getJuaraBadge(j) {
+            if (j === '1') return '<span class="badge badge-1">🥇 Juara 1</span>';
+            if (j === '2') return '<span class="badge badge-2">🥈 Juara 2</span>';
+            if (j === '3') return '<span class="badge badge-3">🥉 Juara 3</span>';
+            return `<span class="badge badge-other">${escapeHtml(j)}</span>`;
+        }
+
+        function getTingkatBadge(t) {
+            t = t || 'Kabupaten';
+            const map = {
+                'Internasional': '<span class="badge" style="background:linear-gradient(135deg,#ddd6fe,#c4b5fd);color:#5b21b6">🌍 Internasional</span>',
+                'Nasional': '<span class="badge" style="background:linear-gradient(135deg,#bfdbfe,#93c5fd);color:#1e40af">🇮🇩 Nasional</span>',
+                'Provinsi': '<span class="badge" style="background:linear-gradient(135deg,#a7f3d0,#6ee7b7);color:#065f46">🏛️ Provinsi</span>',
+                'Kabupaten': '<span class="badge" style="background:linear-gradient(135deg,#fde68a,#fcd34d);color:#92400e">📍 Kabupaten</span>'
+            };
+            return map[t] || `<span class="badge badge-other">${escapeHtml(t)}</span>`;
+        }
+
+        function formatDate(d) {
+            if (!d) return '-';
+            return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        let filterTimeout;
+        ['searchInput', 'filterKelas', 'filterKategori', 'filterJuara', 'filterTingkat'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(loadTable, 300);
+            });
+            document.getElementById(id).addEventListener('change', loadTable);
+        });
+
+        async function updateFilters() {
+            try {
+                let kelas = [], kategori = [];
+                if (USE_API) {
+                    const res = await fetch(`${API}/filters`);
+                    const json = await res.json();
+                    if (json.success) { kelas = json.data.kelas; kategori = json.data.kategori; }
+                } else {
+                    const data = lsLoad();
+                    kelas = [...new Set(data.map(p => p.kelas))].sort();
+                    kategori = [...new Set(data.map(p => p.kategori))].sort();
+                }
+                const kelasSel = document.getElementById('filterKelas');
+                const katSel = document.getElementById('filterKategori');
+                const cK = kelasSel.value, cKat = katSel.value;
+                kelasSel.innerHTML = '<option value="">Semua Kelas</option>' + kelas.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+                katSel.innerHTML = '<option value="">Semua Kategori</option>' + kategori.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+                kelasSel.value = cK; katSel.value = cKat;
+            } catch (e) {}
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Yakin ingin menghapus data ini?')) return;
+            try {
+                if (USE_API) {
+                    const res = await fetch(`${API}/prestasi/${id}`, { method: 'DELETE' });
+                    const json = await res.json();
+                    if (!json.success) throw new Error(json.message);
+                } else {
+                    lsSave(lsLoad().filter(p => p.id !== id));
+                }
+                showToast('Data berhasil dihapus', 'success');
+                loadTable(); updateFilters(); loadStatsAndCharts();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        async function clearAllData() {
+            if (!confirm('Yakin ingin menghapus SEMUA data? Tidak dapat dibatalkan.')) return;
+            try {
+                if (USE_API) {
+                    const res = await fetch(`${API}/prestasi`, { method: 'DELETE' });
+                    const json = await res.json();
+                    if (!json.success) throw new Error(json.message);
+                } else { lsSave([]); }
+                showToast('Semua data telah dihapus', 'success');
+                loadTable(); updateFilters(); loadStatsAndCharts();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+
+        function destroyCharts() {
+            Object.values(charts).forEach(c => { if (c) c.destroy(); });
+            charts = {};
+        }
+
+        function countBy(arr, key) {
+            const map = {};
+            arr.forEach(p => { const k = p[key] || 'Lainnya'; map[k] = (map[k] || 0) + 1; });
+            return map;
+        }
+
+        async function loadStatsAndCharts() {
+            try {
+                let stats, chartData;
+                if (USE_API) {
+                    const res = await fetch(`${API}/stats`);
+                    const json = await res.json();
+                    if (!json.success) throw new Error(json.message);
+                    stats = json.stats;
+                    chartData = json.charts;
+                } else {
+                    const data = lsLoad();
+                    stats = {
+                        total: data.length,
+                        juara1: data.filter(p => p.juara === '1').length,
+                        kategori: new Set(data.map(p => p.kategori)).size,
+                        siswa: new Set(data.map(p => p.nama)).size
+                    };
+                    const byKategori = Object.entries(countBy(data, 'kategori')).map(([kategori, count]) => ({ kategori, count }));
+                    const byJuara = Object.entries(countBy(data, 'juara')).map(([juara, count]) => ({ juara, count }));
+                    const byKelas = Object.entries(countBy(data, 'kelas')).map(([kelas, count]) => ({ kelas, count }));
+                    const byPembimbing = Object.entries(countBy(data, 'pembimbing')).map(([pembimbing, count]) => ({ pembimbing, count }));
+                    const bulanMap = {};
+                    data.forEach(p => {
+                        if (!p.tanggal) return;
+                        const key = p.tanggal.slice(0, 7);
+                        bulanMap[key] = (bulanMap[key] || 0) + 1;
+                    });
+                    const byBulan = Object.entries(bulanMap).sort().map(([bulan, count]) => ({ bulan, count }));
+                    const siswaTotal = {};
+                    data.forEach(p => {
+                        if (p.total == null) return;
+                        siswaTotal[p.nama] = (siswaTotal[p.nama] || 0) + Number(p.total);
+                    });
+                    const byTotal = Object.entries(siswaTotal).map(([nama, total_poin]) => ({ nama, total_poin }))
+                        .sort((a, b) => b.total_poin - a.total_poin).slice(0, 10);
+                    const byTingkat = Object.entries(countBy(data.map(p => ({...p, tingkat: p.tingkat || 'Kabupaten'})), 'tingkat'))
+                        .map(([tingkat, count]) => ({ tingkat, count }));
+                    chartData = { byKategori, byJuara, byKelas, byPembimbing, byBulan, byTotal, byTingkat };
+                }
+
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-juara1').textContent = stats.juara1;
+                document.getElementById('stat-kategori').textContent = stats.kategori;
+                document.getElementById('stat-siswa').textContent = stats.siswa;
+
+                destroyCharts();
+                if (stats.total === 0) return;
+
+                const colors = ['#6366f1','#22d3ee','#f59e0b','#ef4444','#a78bfa','#f472b6','#34d399','#fb923c','#60a5fa','#e879f9'];
+                const { byKategori, byJuara, byKelas, byPembimbing, byBulan, byTotal, byTingkat } = chartData;
+
+                const chartOpts = { responsive: true, maintainAspectRatio: false };
+
+                charts.kategori = new Chart(document.getElementById('chartKategori'), {
+                    type: 'bar',
+                    data: { labels: byKategori.map(r => r.kategori), datasets: [{ label: 'Jumlah', data: byKategori.map(r => r.count), backgroundColor: colors, borderRadius: 8 }] },
+                    options: { ...chartOpts, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+
+                charts.kategoriDash = new Chart(document.getElementById('chartKategoriDash'), {
+                    type: 'doughnut',
+                    data: { labels: byKategori.map(r => r.kategori), datasets: [{ data: byKategori.map(r => r.count), backgroundColor: colors, borderWidth: 0 }] },
+                    options: { ...chartOpts, plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 10 } } } }
+                });
+
+                const juaraLabels = byJuara.map(r => r.juara === '1' ? 'Juara 1' : r.juara === '2' ? 'Juara 2' : r.juara === '3' ? 'Juara 3' : r.juara);
+                const juaraColors = ['#fbbf24', '#94a3b8', '#cd7f32', '#a78bfa', '#34d399', '#60a5fa'];
+
+                charts.juara = new Chart(document.getElementById('chartJuara'), {
+                    type: 'pie',
+                    data: { labels: juaraLabels, datasets: [{ data: byJuara.map(r => r.count), backgroundColor: juaraColors, borderWidth: 0 }] },
+                    options: { ...chartOpts, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                charts.juaraDash = new Chart(document.getElementById('chartJuaraDash'), {
+                    type: 'pie',
+                    data: { labels: juaraLabels, datasets: [{ data: byJuara.map(r => r.count), backgroundColor: juaraColors, borderWidth: 0 }] },
+                    options: { ...chartOpts, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                charts.kelas = new Chart(document.getElementById('chartKelas'), {
+                    type: 'bar',
+                    data: { labels: byKelas.map(r => r.kelas), datasets: [{ label: 'Jumlah', data: byKelas.map(r => r.count), backgroundColor: '#6366f1', borderRadius: 8 }] },
+                    options: { ...chartOpts, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+
+                const bulanLabels = byBulan.map(r => {
+                    const [y, m] = r.bulan.split('-');
+                    return new Date(y, m - 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+                });
+                charts.bulan = new Chart(document.getElementById('chartBulan'), {
+                    type: 'line',
+                    data: {
+                        labels: bulanLabels,
+                        datasets: [{
+                            label: 'Jumlah Prestasi', data: byBulan.map(r => r.count),
+                            borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.15)',
+                            fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: '#a78bfa'
+                        }]
+                    },
+                    options: { ...chartOpts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+
+                charts.pembimbing = new Chart(document.getElementById('chartPembimbing'), {
+                    type: 'bar',
+                    data: { labels: byPembimbing.map(r => r.pembimbing), datasets: [{ label: 'Jumlah', data: byPembimbing.map(r => r.count), backgroundColor: '#34d399', borderRadius: 8 }] },
+                    options: { ...chartOpts, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+
+                charts.total = new Chart(document.getElementById('chartTotal'), {
+                    type: 'bar',
+                    data: { labels: byTotal.map(r => r.nama), datasets: [{ label: 'Total Poin', data: byTotal.map(r => r.total_poin), backgroundColor: '#f59e0b', borderRadius: 8 }] },
+                    options: { ...chartOpts, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                if (byTingkat && byTingkat.length) {
+                    const tingkatColors = { 'Internasional': '#8b5cf6', 'Nasional': '#3b82f6', 'Provinsi': '#10b981', 'Kabupaten': '#f59e0b' };
+                    charts.tingkat = new Chart(document.getElementById('chartTingkat'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: byTingkat.map(r => r.tingkat),
+                            datasets: [{ data: byTingkat.map(r => r.count), backgroundColor: byTingkat.map(r => tingkatColors[r.tingkat] || '#94a3b8'), borderWidth: 0 }]
+                        },
+                        options: { ...chartOpts, plugins: { legend: { position: 'bottom' } } }
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                USE_API = false;
+                updateDbBadge();
+                loadStatsAndCharts();
+            }
+        }
+
+        function exportCSV() {
+            if (allData.length === 0) { showToast('Tidak ada data untuk diekspor', 'error'); return; }
+            const headers = ['No', 'Nama', 'Kelas', 'Kategori Lomba', 'Tingkat', 'Juara', 'Total', 'Tanggal', 'Pembimbing'];
+            const rows = allData.map((p, i) => [
+                i + 1, p.nama, p.kelas, p.kategori, p.tingkat || 'Kabupaten',
+                p.juara === '1' ? 'Juara 1' : p.juara === '2' ? 'Juara 2' : p.juara === '3' ? 'Juara 3' : p.juara,
+                p.total != null ? p.total : '', p.tanggal, p.pembimbing
+            ]);
+            const csv = headers.join(',') + '\n' + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `prestasi_siswa_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            showToast('CSV berhasil diunduh', 'success');
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + type;
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function updateDbBadge() {
+            const el = document.getElementById('dbStatus');
+            if (USE_API) {
+                el.textContent = '✅ Database Connected';
+                el.style.background = 'rgba(16,185,129,0.3)';
+            } else {
+                el.textContent = '💾 Mode Browser';
+                el.style.background = 'rgba(245,158,11,0.35)';
+            }
+        }
+
+        async function init() {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 1200);
+                const res = await fetch(`${API}/stats`, { signal: controller.signal });
+                clearTimeout(timeout);
+                USE_API = res.ok;
+            } catch (e) { USE_API = false; }
+
+            updateDbBadge();
+            updateFilters();
+            loadTable();
+            loadStatsAndCharts();
+
+            if (!USE_API) showToast('Mode browser aktif — data disimpan di komputer Anda', 'success');
+        }
+
+        init();
+    </script>
+</body>
+</html>
